@@ -61,7 +61,7 @@ pipeline {
 
         stage('Trigger CD') {
             steps {
-                build job: 'frontend-cd-pipeline', wait: false,
+                build job: 'frontend-cd', wait: false,
                       parameters: [string(name: 'IMAGE_TAG', value: "${DOCKER_TAG}")]
             }
         }
