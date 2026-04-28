@@ -4,9 +4,7 @@ export default function App(){
   const [msg, setMsg] = useState('Loading...')
 
   useEffect(()=>{
-    const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
-    const url = `${base}/api`
-    fetch(url)
+    fetch('/api')
       .then(r=>r.json())
       .then(d=>setMsg(d.message))
       .catch(()=>setMsg('Could not reach API'))
