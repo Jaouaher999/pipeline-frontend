@@ -27,7 +27,7 @@ pipeline {
                                 --name frontend \
                                 --restart unless-stopped \
                                 -p 80:80 \
-                                -e REACT_APP_API_URL=http://${BACKEND_VM_IP}:3000 \
+                                -e VITE_BACKEND_URL=http://${BACKEND_VM_IP}:3000 \
                                 ${FRONTEND_IMAGE}:${params.IMAGE_TAG}
 
                             sleep 5
