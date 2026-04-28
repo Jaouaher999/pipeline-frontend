@@ -1,0 +1,52 @@
+pipeline {
+    agent { label 'docker-agent' }
+
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
+    }
+
+    environment {
+        FRONTEND_IMAGE = "yellowstar999/frontend"
+        BACKEND_VM_IP  = "192.168.56.101"
+        FRONTEND_VM_IP = "192.168.56.102"
+        DEPLOY_USER    = "user"                            
+    }
+
+    stages {
+        stage('Deploy Frontend') {
+            steps {
+                sshagent(credentials: ['vm-frontend-ssh']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${FRONTEND_VM_IP} '
+                            docker pull ${FRONTEND_IMAGE}:${params.IMAGE_TAG}
+
+                            docker stop frontend 2>/dev/null || true
+                            docker rm   frontend 2>/dev/null || true
+
+                            docker run -d \
+                                --name frontend \
+                                --restart unless-stopped \
+                                -p 80:80 \
+                                -e REACT_APP_API_URL=http://${BACKEND_VM_IP}:3000 \
+                                ${FRONTEND_IMAGE}:${params.IMAGE_TAG}
+
+                            sleep 5
+                            docker ps --filter name=frontend --format "{{.Status}}"
+                        '
+                    """
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                retry(3) {
+                    sh "sleep 5 && curl -f http://${FRONTEND_VM_IP}:80 || exit 1"
+                }
+            }
+        }
+    }
+    post {
+        success { echo "Frontend deployed! Access it at: http://${FRONTEND_VM_IP}" }
+    }
+}
